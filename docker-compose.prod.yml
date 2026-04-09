@@ -1,6 +1,7 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:16
+    privileged: true
     environment:
       POSTGRES_USER: syncdoc
       POSTGRES_PASSWORD: syncdoc_prod_2026!
