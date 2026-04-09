@@ -3,12 +3,11 @@ services:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: syncdoc
-      POSTGRES_PASSWORD: syncdoc_dev
+      POSTGRES_PASSWORD: syncdoc_prod_2026!
       POSTGRES_DB: syncdoc
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
 
   app:
     build:
@@ -17,15 +16,13 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgresql://syncdoc:syncdoc_dev@db:5432/syncdoc
-      NEXTAUTH_SECRET: dev-secret-change-in-production
-      NEXTAUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://syncdoc:syncdoc_prod_2026!@db:5432/syncdoc
+      NEXTAUTH_SECRET: jRMjtEOlgc9LE5mdPbXOLk/JhxbeSTBhSIF5VdpBfyc=
+      NEXTAUTH_URL: http://10.10.11.55:3000
     depends_on:
-      - db
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
+      db:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   pgdata:
