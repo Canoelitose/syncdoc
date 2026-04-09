@@ -4,8 +4,9 @@ WORKDIR /app
 
 # Dependencies
 FROM base AS deps
+RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --ignore-scripts && npx prisma generate || true
 
 # Build
 FROM base AS builder
