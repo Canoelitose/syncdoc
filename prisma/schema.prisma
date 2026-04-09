@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String         @id @default(uuid())
+  email        String         @unique
+  name         String
+  avatar       String?
+  passwordHash String?
+  createdAt    DateTime       @default(now())
+  oauthAccounts OAuthAccount[]
+  createdRooms Room[]         @relation("RoomCreator")
+  memberships  RoomMember[]
+}
+
+model OAuthAccount {
+  id                String @id @default(uuid())
+  userId            String
+  provider          String
+  providerAccountId String
+  user              User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Room {
+  id          String       @id @default(uuid())
+  name        String
+  code        String       @unique
+  inviteToken String       @unique @default(uuid())
+  createdById String
+  createdAt   DateTime     @default(now())
+  createdBy   User         @relation("RoomCreator", fields: [createdById], references: [id])
+  members     RoomMember[]
+  documents   Document[]
+  connections Connection[]
+}
+
+model RoomMember {
+  roomId   String
+  userId   String
+  joinedAt DateTime @default(now())
+  room     Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([roomId, userId])
+}
+
+model Document {
+  id        String   @id @default(uuid())
+  title     String
+  type      DocType  @default(TEXT)
+  roomId    String
+  parentId  String?
+  positionX Float    @default(0)
+  positionY Float    @default(0)
+  yjsState  Bytes?
+  embedUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room     Room       @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  parent   Document?  @relation("DocumentTree", fields: [parentId], references: [id])
+  children Document[] @relation("DocumentTree")
+  connectionsFrom Connection[] @relation("ConnectionSource")
+  connectionsTo   Connection[] @relation("ConnectionTarget")
+}
+
+enum DocType {
+  TEXT
+  EMBED
+}
+
+model Connection {
+  id               String   @id @default(uuid())
+  roomId           String
+  sourceDocumentId String
+  targetDocumentId String
+
+  room   Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  source Document @relation("ConnectionSource", fields: [sourceDocumentId], references: [id], onDelete: Cascade)
+  target Document @relation("ConnectionTarget", fields: [targetDocumentId], references: [id], onDelete: Cascade)
+}
