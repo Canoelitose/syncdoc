@@ -1,12 +1,10 @@
-FROM node:20-alpine AS base
-
+FROM node:20 AS base
 WORKDIR /app
 
 # Dependencies
 FROM base AS deps
-RUN apk add --no-cache python3 make g++
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm install
 
 # Build
 FROM base AS builder
@@ -17,7 +15,8 @@ RUN npx prisma generate
 RUN npm run build
 
 # Production
-FROM base AS runner
+FROM node:20-slim AS runner
+WORKDIR /app
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
